@@ -3,7 +3,8 @@ import React, { useEffect, useState } from 'react';
 import styled from '@emotion/styled';
 import Post from './Post';
 import Container from '../common/Container';
-import useWindowWidth from '../hooks/useWindowWidth';
+// import useWindowWidth from '../hooks/useWindowWidth';
+import { useWindowWidth } from '../../context/WindowWidthContext';
 
 const PostListContainer = styled.div(() => ({
   display: 'flex',
@@ -35,15 +36,16 @@ const LoadMoreButton = styled.button(() => ({
 export default function Posts() {
   const [posts, setPosts] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [availablePosts, setAvailablePosts] = useState(12);
 
   const { isSmallerDevice } = useWindowWidth();
 
   useEffect(() => {
     const fetchPost = async () => {
-      const { data: posts } = await axios.get('/api/v1/posts', {
+      const { data} = await axios.get('https://jsonplaceholder.typicode.com/albums/1/photos', {
         params: { start: 0, limit: isSmallerDevice ? 5 : 10 },
       });
-      setPosts(posts);
+      setPosts(data);
     };
 
     fetchPost();
@@ -53,6 +55,7 @@ export default function Posts() {
     setIsLoading(true);
 
     setTimeout(() => {
+      setAvailablePosts(prev => prev + 12);
       setIsLoading(false);
     }, 3000);
   };
@@ -60,13 +63,13 @@ export default function Posts() {
   return (
     <Container>
       <PostListContainer>
-        {posts.map(post => (
-          <Post post={post} />
+      {posts.slice(0, availablePosts).map(post => (
+          <Post key={post.id} posts={posts} />
         ))}
       </PostListContainer>
 
       <div style={{ display: 'flex', justifyContent: 'center' }}>
-        <LoadMoreButton onClick={handleClick} disabled={isLoading}>
+        <LoadMoreButton onClick={handleClick} disabled={isLoading} hidden={availablePosts>=posts.length}>
           {!isLoading ? 'Load More' : 'Loading...'}
         </LoadMoreButton>
       </div>
